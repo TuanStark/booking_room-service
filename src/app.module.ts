@@ -1,10 +1,21 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { RoomsModule } from './modules/rooms/rooms.module';
+import { KafkaService } from './kafka/kafka.service';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { PrismaService } from './prisma/prisma.service';
+
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PrismaModule,
+    RoomsModule,
+  ],
+  controllers: [],
+  providers: [PrismaService, KafkaService],
+  exports: [KafkaService], // export nếu service khác cần
 })
 export class AppModule {}
