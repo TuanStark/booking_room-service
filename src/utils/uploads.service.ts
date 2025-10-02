@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { deleteImageToService, uploadImageToService } from '../utils/http.util';
+import { deleteImageToService, uploadImagesToService, uploadImageToService } from '../utils/http.util';
 
 @Injectable()
 export class UploadService {
@@ -9,5 +9,9 @@ export class UploadService {
 
   async deleteImage(publicId: string): Promise<string> {
     return deleteImageToService(publicId); // Delegate to utility function
+  }
+
+  async uploadImages(files: Express.Multer.File[]): Promise<any> {
+    return uploadImagesToService(files); // Delegate to utility function
   }
 }

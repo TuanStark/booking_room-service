@@ -53,27 +53,17 @@ model RoomImages {
   @@map("room_images")
 }
 
-model Amenity {
-  id   String @id @default(uuid())
-  name String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  rooms RoomAmenities[]
-
-  @@map("amenities")
-}
-
 model RoomAmenities {
-  roomId    String
-  amenityId String   @map("amenity_id")
+  id        String   @id @default(uuid())
+  roomId    String 
+  name      String 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
 
-  @@id([roomId, amenityId])
+  @@unique([roomId, name])   // chỉ đảm bảo 1 room không có amenity trùng
   @@map("room_amenities")
 }
+
 

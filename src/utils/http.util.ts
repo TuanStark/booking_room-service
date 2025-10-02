@@ -21,6 +21,28 @@ export async function uploadImageToService(file: Express.Multer.File): Promise<a
     }
 }
 
+export async function uploadImagesToService(files: Express.Multer.File[]): Promise<any> {
+    const formData = new FormData(); // Now works with default import
+    files.forEach(file => {
+        formData.append('files', file.buffer, file.originalname);
+    });
+
+    try {
+        const res = await axios.post(`${process.env.UPLOAD_SERVICE_URL}/upload/multiple`, formData, {
+            headers: {
+                'Content-Type': `multipart/form-data; boundary=${formData.getBoundary()}`,
+            },
+        });
+        // Chuẩn hoá key theo BuildingService (imageUrl, imagePublicId)
+        return res.data.map((r: any) => ({
+            imageUrl: r.secure_url || r.url,
+            imagePublicId: r.public_id,
+        }));
+    } catch (error) {
+        throw new Error(`Failed to upload image: ${error.message}`);
+    }
+}
+
 export async function deleteImageToService(publicId: string): Promise<string> {
     try {
         const res = await axios.delete(`${process.env.UPLOAD_SERVICE_URL}/upload`);
