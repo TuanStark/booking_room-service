@@ -4,10 +4,10 @@ import { RoomsController } from './rooms.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UploadService } from 'src/utils/uploads.service';
-import { KafkaService } from 'src/kafka/kafka.service';
+import { KafkaModule } from '../kafka/kafka.module';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, KafkaModule],
   controllers: [RoomsController],
-  providers: [RoomsService, PrismaService, UploadService,  KafkaService],
+  providers: [RoomsService, PrismaService, UploadService,],
 })
 export class RoomsModule {}
