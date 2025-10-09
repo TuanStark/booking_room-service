@@ -9,5 +9,6 @@ import { KafkaModule } from '../kafka/kafka.module';
   imports: [PrismaModule, KafkaModule],
   controllers: [RoomsController],
   providers: [RoomsService, PrismaService, UploadService,],
+  exports: [RoomsService],
 })
 export class RoomsModule {}

@@ -259,4 +259,60 @@ export class RoomsService {
 
     return deletedRoom;
   }
+
+  // Methods for Kafka event handling
+  async updateRoomStatus(roomId: string, status: RoomStatus) {
+    try {
+      const room = await this.prisma.room.update({
+        where: { id: roomId },
+        data: { status },
+      });
+      
+      console.log(`Room ${roomId} status updated to ${status}`);
+      return room;
+    } catch (error) {
+      console.error(`Failed to update room ${roomId} status:`, error.message);
+      throw error;
+    }
+  }
+
+  async getRoomById(roomId: string) {
+    return this.prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        images: true,
+        amenities: true,
+      },
+    });
+  }
+
+  async getAvailableRooms(buildingId?: string) {
+    const where = {
+      status: RoomStatus.AVAILABLE,
+      ...(buildingId && { buildingId }),
+    };
+
+    return this.prisma.room.findMany({
+      where,
+      include: {
+        images: true,
+        amenities: true,
+      },
+    });
+  }
+
+  async getBookedRooms(buildingId?: string) {
+    const where = {
+      status: RoomStatus.BOOKED,
+      ...(buildingId && { buildingId }),
+    };
+
+    return this.prisma.room.findMany({
+      where,
+      include: {
+        images: true,
+        amenities: true,
+      },
+    });
+  }
 }
