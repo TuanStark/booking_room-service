@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { KafkaProducerService } from './kafka.producer.service';
 import { KafkaConsumerService } from './kafka.consumer.service';
@@ -7,7 +7,7 @@ import { RoomsModule } from '../rooms/rooms.module';
 
 @Module({
   imports: [
-    RoomsModule,
+    forwardRef(() => RoomsModule),
     ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
