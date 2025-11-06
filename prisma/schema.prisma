@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+  DISABLED
+}
+
+model Room {
+  id          String        @id @default(uuid())
+  buildingId  String        @map("building_id")
+  name        String
+  description String? 
+  price       Float         @map("price")
+  capacity    Int           @default(1)
+  squareMeter Float         @default(0)
+  bedCount    Int           @default(1)
+  bathroomCount Int           @default(1)
+  floor         Int           @default(1)
+  countCapacity Int           @default(0)
+  status      RoomStatus    @default(AVAILABLE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  images      RoomImages[]
+  amenities   RoomAmenities[]
+
+  @@index([buildingId])
+  @@map("rooms")
+}
+
+model RoomImages {
+  id            String   @id @default(uuid())
+  roomId        String   @map("room_id")
+  imageUrl      String   @map("image_url")
+  imagePublicId String?  @map("image_public_id")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@map("room_images")
+}
+
+model RoomAmenities {
+  id        String   @id @default(uuid())
+  roomId    String 
+  name      String 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, name])   // chỉ đảm bảo 1 room không có amenity trùng
+  @@map("room_amenities")
+}
+
+

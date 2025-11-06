@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  room-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: room-service-dev
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DATABASE_URL: ${DATABASE_URL}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
+      NODE_ENV: development
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./node_modules:/app/node_modules
+    command: npm run start:dev
+    networks:
+      my_custom_network:
+        ip4_address: ${APP_IP}
+
+networks:
+  my_custom_network:
+    external: true
+
