@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { deleteImageToService, uploadImagesToService, uploadImageToService } from './http.util';
+import {
+  deleteImageToService,
+  uploadImagesToService,
+  uploadImageToService,
+} from './http.util';
 
 @Injectable()
 export class UploadService {

@@ -8,7 +8,7 @@ import { KafkaModule } from '../kafka/kafka.module';
 @Module({
   imports: [PrismaModule, KafkaModule],
   controllers: [RoomsController],
-  providers: [RoomsService, PrismaService, UploadService,],
+  providers: [RoomsService, PrismaService, UploadService],
   exports: [RoomsService],
 })
 export class RoomsModule {}

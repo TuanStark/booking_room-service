@@ -15,8 +15,11 @@ import { RoomsModule } from '../rooms/rooms.module';
           transport: Transport.KAFKA,
           options: {
             client: {
-              clientId: configService.get<string>('KAFKA_CLIENT_ID') || 'room-service',
-              brokers: configService.get<string>('KAFKA_BROKER')?.split(',') || ['localhost:9092'],
+              clientId:
+                configService.get<string>('KAFKA_CLIENT_ID') || 'room-service',
+              brokers: configService
+                .get<string>('KAFKA_BROKER')
+                ?.split(',') || ['localhost:9092'],
             },
             consumer: {
               groupId: 'room-consumer',

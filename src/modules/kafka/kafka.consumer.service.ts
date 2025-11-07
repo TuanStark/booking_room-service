@@ -15,11 +15,16 @@ export class KafkaConsumerService implements OnModuleInit {
     private readonly roomsService: RoomsService,
   ) {
     this.kafka = new Kafka({
-      clientId: this.configService.get<string>('KAFKA_CLIENT_ID') || 'room-service',
-      brokers: this.configService.get<string>('KAFKA_BROKER')?.split(',') || ['localhost:9092'],
+      clientId:
+        this.configService.get<string>('KAFKA_CLIENT_ID') || 'room-service',
+      brokers: this.configService.get<string>('KAFKA_BROKER')?.split(',') || [
+        'localhost:9092',
+      ],
     });
 
-    this.consumer = this.kafka.consumer({ groupId: this.configService.get<string>('KAFKA_GROUP_ID') || 'room-group' });
+    this.consumer = this.kafka.consumer({
+      groupId: this.configService.get<string>('KAFKA_GROUP_ID') || 'room-group',
+    });
   }
 
   async onModuleInit() {
@@ -31,16 +36,23 @@ export class KafkaConsumerService implements OnModuleInit {
       await this.consumer.subscribe({ topic: KafkaTopics.BOOKING_CREATED });
       await this.consumer.subscribe({ topic: KafkaTopics.BOOKING_CANCELED });
       // await this.consumer.subscribe({ topic: KafkaTopics.BOOKING_SUCCESS });
-      
+
       await this.run();
     } catch (error) {
-      console.warn('⚠️ Kafka not available, skipping consumer setup:', error.message);
+      console.warn(
+        '⚠️ Kafka not available, skipping consumer setup:',
+        error.message,
+      );
     }
   }
 
   private async run() {
     await this.consumer.run({
-      eachMessage: async ({ topic, partition, message }: EachMessagePayload) => {
+      eachMessage: async ({
+        topic,
+        partition,
+        message,
+      }: EachMessagePayload) => {
         const value = message.value?.toString();
         if (!value) return;
 
@@ -62,14 +74,14 @@ export class KafkaConsumerService implements OnModuleInit {
   }
 
   // Logic xử lý khi nhận event
-  
+
   // Booking events
   private async handleBookingCreated(data: any) {
     console.log('📩 [Kafka] Booking created event received:', data);
-    
+
     try {
       const { bookingId, userId, startDate, endDate, details } = data;
-      
+
       if (!details || !Array.isArray(details) || details.length === 0) {
         console.warn('⚠️ No room details in booking created event');
         return;
@@ -78,7 +90,7 @@ export class KafkaConsumerService implements OnModuleInit {
       // Process each room in the booking
       for (const detail of details) {
         const { roomId, price, time } = detail;
-        
+
         if (!roomId) {
           console.warn('⚠️ No roomId in booking detail');
           continue;
@@ -93,27 +105,31 @@ export class KafkaConsumerService implements OnModuleInit {
 
         // Kiểm tra room có available không
         if (room.status !== RoomStatus.AVAILABLE) {
-          console.warn(`⚠️ Room ${roomId} is not available (status: ${room.status})`);
+          console.warn(
+            `⚠️ Room ${roomId} is not available (status: ${room.status})`,
+          );
           continue;
         }
 
-        
-        if(room.countCapacity >= room.capacity) {
-          await this.roomsService.update(roomId, { 
-            status: RoomStatus.BOOKED, 
+        if (room.countCapacity >= room.capacity) {
+          await this.roomsService.update(roomId, {
+            status: RoomStatus.BOOKED,
           });
-          console.log(`✅ Room ${roomId} status updated to BOOKED for booking ${bookingId}`);
+          console.log(
+            `✅ Room ${roomId} status updated to BOOKED for booking ${bookingId}`,
+          );
           continue;
         }
 
         // Đổi status room từ AVAILABLE -> BOOKED và tăng countCapacity
-        await this.roomsService.update(roomId, { 
-          status: RoomStatus.BOOKED, 
-          countCapacity: room.countCapacity + 1 
+        await this.roomsService.update(roomId, {
+          status: RoomStatus.BOOKED,
+          countCapacity: room.countCapacity + 1,
         });
-        console.log(`✅ Room ${roomId} status updated to BOOKED for booking ${bookingId}`);
+        console.log(
+          `✅ Room ${roomId} status updated to BOOKED for booking ${bookingId}`,
+        );
       }
-      
     } catch (error) {
       console.error('❌ Error handling booking created event:', error.message);
     }
@@ -121,10 +137,10 @@ export class KafkaConsumerService implements OnModuleInit {
 
   private async handleBookingCanceled(data: any) {
     console.log('📩 [Kafka] Booking canceled event received:', data);
-    
+
     try {
       const { bookingId, userId, reason, details } = data;
-      
+
       if (!details || !Array.isArray(details) || details.length === 0) {
         console.warn('⚠️ No room details in booking canceled event');
         return;
@@ -133,7 +149,7 @@ export class KafkaConsumerService implements OnModuleInit {
       // Process each room in the booking
       for (const detail of details) {
         const { roomId, price, time } = detail;
-        
+
         if (!roomId) {
           console.warn('⚠️ No roomId in booking detail');
           continue;
@@ -148,26 +164,30 @@ export class KafkaConsumerService implements OnModuleInit {
 
         // Kiểm tra room có booked không
         if (room.status !== RoomStatus.BOOKED) {
-          console.warn(`⚠️ Room ${roomId} is not booked (status: ${room.status})`);
+          console.warn(
+            `⚠️ Room ${roomId} is not booked (status: ${room.status})`,
+          );
           continue;
         }
 
-        if(room.countCapacity >= room.capacity) {
-          throw new Error(`⚠️ Room ${roomId} has reached capacity (countCapacity: ${room.countCapacity}, capacity: ${room.capacity})`);
+        if (room.countCapacity >= room.capacity) {
+          throw new Error(
+            `⚠️ Room ${roomId} has reached capacity (countCapacity: ${room.countCapacity}, capacity: ${room.capacity})`,
+          );
         }
 
         // Đổi status room từ BOOKED -> AVAILABLE
-        await this.roomsService.update(roomId, { 
-          status: RoomStatus.AVAILABLE, 
-          countCapacity: room.countCapacity + 1 
+        await this.roomsService.update(roomId, {
+          status: RoomStatus.AVAILABLE,
+          countCapacity: room.countCapacity + 1,
         });
-        
-        console.log(`✅ Room ${roomId} status updated to AVAILABLE after booking ${bookingId} cancellation`);
+
+        console.log(
+          `✅ Room ${roomId} status updated to AVAILABLE after booking ${bookingId} cancellation`,
+        );
       }
-      
     } catch (error) {
       console.error('❌ Error handling booking canceled event:', error.message);
     }
   }
-
 }
