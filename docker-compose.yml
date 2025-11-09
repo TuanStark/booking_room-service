@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  room-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: room-service-dev
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DATABASE_URL: ${DATABASE_URL}
+      #Cloundinary
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      UPLOAD_SERVICE_URL: ${UPLOAD_SERVICE_URL}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npx prisma generate && npm run start:dev"
+    networks:
+      my_custom_network:
+        ipv4_address: ${APP_IP}
+
+networks:
+  my_custom_network:
+    external: true
+
