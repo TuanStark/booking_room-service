@@ -3,7 +3,7 @@ import { Kafka, EachMessagePayload } from 'kafkajs';
 import { KafkaTopics } from './kafka-topics.enum';
 import { ConfigService } from '@nestjs/config';
 import { RoomsService } from '../rooms/rooms.service';
-import { RoomStatus } from '@prisma/client';
+import { RoomStatus, Room } from '@prisma/client';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit {
@@ -14,12 +14,15 @@ export class KafkaConsumerService implements OnModuleInit {
     private readonly configService: ConfigService,
     private readonly roomsService: RoomsService,
   ) {
+    const kafkaBroker = this.configService.get<string>('KAFKA_BROKER');
+    const brokers = kafkaBroker?.split(',') || ['booking_kafka:9092'];
+    console.log('KafkaConsumerService - KAFKA_BROKER from env:', process.env.KAFKA_BROKER);
+    console.log('KafkaConsumerService - KAFKA_BROKER from config:', kafkaBroker);
+    console.log('KafkaConsumerService - Kafka brokers:', brokers);
     this.kafka = new Kafka({
       clientId:
         this.configService.get<string>('KAFKA_CLIENT_ID') || 'room-service',
-      brokers: this.configService.get<string>('KAFKA_BROKER')?.split(',') || [
-        'localhost:9092',
-      ],
+      brokers: brokers,
     });
 
     this.consumer = this.kafka.consumer({
@@ -111,7 +114,8 @@ export class KafkaConsumerService implements OnModuleInit {
           continue;
         }
 
-        if (room.countCapacity >= room.capacity) {
+        const currentCountCapacity = (room as Room & { countCapacity?: number }).countCapacity ?? 0;
+        if (currentCountCapacity >= room.capacity) {
           await this.roomsService.update(roomId, {
             status: RoomStatus.BOOKED,
           });
@@ -124,7 +128,7 @@ export class KafkaConsumerService implements OnModuleInit {
         // Đổi status room từ AVAILABLE -> BOOKED và tăng countCapacity
         await this.roomsService.update(roomId, {
           status: RoomStatus.BOOKED,
-          countCapacity: room.countCapacity + 1,
+          countCapacity: currentCountCapacity + 1,
         });
         console.log(
           `✅ Room ${roomId} status updated to BOOKED for booking ${bookingId}`,
@@ -170,16 +174,17 @@ export class KafkaConsumerService implements OnModuleInit {
           continue;
         }
 
-        if (room.countCapacity >= room.capacity) {
+        const currentCountCapacity = (room as Room & { countCapacity?: number }).countCapacity ?? 0;
+        if (currentCountCapacity <= 0) {
           throw new Error(
-            `⚠️ Room ${roomId} has reached capacity (countCapacity: ${room.countCapacity}, capacity: ${room.capacity})`,
+            `⚠️ Room ${roomId} countCapacity is already at minimum (countCapacity: ${currentCountCapacity})`,
           );
         }
 
-        // Đổi status room từ BOOKED -> AVAILABLE
+        // Đổi status room từ BOOKED -> AVAILABLE và giảm countCapacity
         await this.roomsService.update(roomId, {
           status: RoomStatus.AVAILABLE,
-          countCapacity: room.countCapacity + 1,
+          countCapacity: Math.max(0, currentCountCapacity - 1),
         });
 
         console.log(

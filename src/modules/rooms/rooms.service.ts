@@ -174,16 +174,25 @@ export class RoomsService {
     updateRoomDto: UpdateRoomDto,
     files?: Express.Multer.File[],
   ) {
-    // 1. Update cơ bản
+    // 1. Update cơ bản - chỉ include fields được cung cấp
+    const updateData: {
+      status: RoomStatus;
+      name?: string;
+      price?: number;
+      capacity?: number;
+      countCapacity?: number;
+    } = {
+      status: RoomStatus.AVAILABLE,
+    };
+    
+    if (updateRoomDto.name !== undefined) updateData.name = updateRoomDto.name;
+    if (updateRoomDto.price !== undefined) updateData.price = updateRoomDto.price;
+    if (updateRoomDto.capacity !== undefined) updateData.capacity = updateRoomDto.capacity;
+    if (updateRoomDto.countCapacity !== undefined) updateData.countCapacity = updateRoomDto.countCapacity;
+    
     const room = await this.prisma.room.update({
       where: { id },
-      data: {
-        name: updateRoomDto.name,
-        price: updateRoomDto.price,
-        capacity: updateRoomDto.capacity,
-        countCapacity: updateRoomDto.countCapacity,
-        status: RoomStatus.AVAILABLE,
-      },
+      data: updateData,
     });
 
     // 2. Xử lý ảnh bị xoá (nếu có)
@@ -322,5 +331,20 @@ export class RoomsService {
         amenities: true,
       },
     });
+  }
+
+  async getRoombyBuildingId(buildingId: string) {
+    const rooms = await this.prisma.room.findMany({
+      where: { buildingId },
+      include: {
+        images: true,
+        amenities: true,
+      },
+    });
+     
+    if (rooms.length === 0) {
+      throw new NotFoundException('Rooms not found');
+    }
+    return rooms;
   }
 }

@@ -93,4 +93,14 @@ export class RoomsController {
       );
     }
   }
+
+  @Get('building/:buildingId')
+  async getRoombyBuildingId(@Param('buildingId') buildingId: string) {
+    try {
+      const rooms = await this.roomsService.getRoombyBuildingId(buildingId);
+      return new ResponseData(rooms, HttpStatus.OK, HttpMessage.SUCCESS);
+    } catch (error) {
+      return new ResponseData(null, HttpStatus.NOT_FOUND, HttpMessage.NOT_FOUND);
+    }
+  }
 }
