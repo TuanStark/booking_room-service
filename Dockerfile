@@ -1,33 +1,72 @@
-# Multi-stage build for Room Service
-FROM node:18-alpine AS builder
+# =============================
+# 1. BUILDER – Compile TypeScript → JS
+# =============================
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci && npm cache clean --force
-COPY . .
-RUN npm run build
 
-# Production stage
-FROM node:18-alpine AS production
-RUN apk add --no-cache dumb-init
+# Copy package files first → Tối ưu cache
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Cài TẤT CẢ dependencies (dev + prod) để build
+RUN npm ci --legacy-peer-deps
+
+# Copy toàn bộ source code
+COPY . .
+
+# Generate Prisma Client + Build NestJS
+RUN npx prisma generate && \
+    npm run build
+
+# =============================
+# 2. PRUNER – Loại bỏ devDependencies
+# =============================
+FROM node:20-alpine AS pruner
+WORKDIR /app
+
+# Copy cần thiết từ builder
+COPY package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist         ./dist
+COPY --from=builder /app/prisma       ./prisma
+
+# Cài CHỈ production dependencies
+RUN npm ci --only=production --legacy-peer-deps && \
+    npm cache clean --force && \
+    rm -rf /app/node_modules/.prisma
+
+# Tái tạo Prisma Client trong môi trường sạch (binary nhỏ hơn)
+RUN npx prisma generate
+
+# =============================
+# 3. FINAL IMAGE – Runtime only
+# =============================
+FROM node:20-alpine AS production
+WORKDIR /app
+
+# Tạo user non-root (bảo mật)
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+# Copy file cần thiết + gán quyền
+COPY --from=pruner --chown=nestjs:nodejs /app/package*.json ./
+COPY --from=pruner --chown=nestjs:nodejs /app/dist          ./dist
+COPY --from=pruner --chown=nestjs:nodejs /app/prisma        ./prisma
+COPY --from=pruner --chown=nestjs:nodejs /app/node_modules  ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/keys         ./keys
+
+# Chuyển sang user non-root
 USER nestjs
 
-EXPOSE 3006
+# Environment
+ENV NODE_ENV=production \
+    PORT=3001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3006/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+EXPOSE 3001
 
-# Use dumb-init for proper signal handling
-ENTRYPOINT ["dumb-init", "--"]
+# Healthcheck (tùy chọn – yêu cầu có endpoint /health)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
+  CMD wget -qO- http://localhost:${PORT}/health || exit 1
 
-# Start the application
-CMD ["node", "dist/main.js"]
+# Khởi động ứng dụng
+CMD ["node", "dist/main"]
