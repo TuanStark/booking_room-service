@@ -335,7 +335,7 @@ export class RoomsService {
 
   async getRoombyBuildingId(buildingId: string) {
     const rooms = await this.prisma.room.findMany({
-      where: { buildingId },
+      where: { buildingId: buildingId.toString() },
       include: {
         images: true,
         amenities: true,
