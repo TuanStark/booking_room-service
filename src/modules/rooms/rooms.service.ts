@@ -6,6 +6,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllDto } from 'src/common/global/find-all.dto';
 import { RoomStatus } from '@prisma/client';
 import { KafkaProducerService } from '../kafka/kafka.producer.service';
+import axios, { AxiosError } from 'axios';
+
+export interface BuildingResponse {
+  id: string;
+  name?: string;
+  address?: string;
+  [key: string]: any;
+}
 
 @Injectable()
 export class RoomsService {
@@ -161,12 +169,22 @@ export class RoomsService {
   async findOne(id: string) {
     const room = await this.prisma.room.findUnique({
       where: { id },
-      include: { images: true, amenities: true },
+      include: {
+        images: true,
+        amenities: true,
+      },
     });
+
     if (!room) {
-      throw new NotFoundException('Room not found');
+      throw new NotFoundException('Rooms not found');
     }
-    return room;
+
+    const building = await this.fetchBuildingFromService(room.buildingId);
+
+    return {
+      ...room,
+      building,
+    };
   }
 
   async update(
@@ -334,17 +352,59 @@ export class RoomsService {
   }
 
   async getRoombyBuildingId(buildingId: string) {
-    const rooms = await this.prisma.room.findMany({
-      where: { buildingId: buildingId.toString() },
-      include: {
-        images: true,
-        amenities: true,
-      },
-    });
-     
+    const [rooms, building] = await Promise.all([
+      this.prisma.room.findMany({
+        where: { buildingId: buildingId.toString() },
+        include: {
+          images: true,
+          amenities: true,
+        },
+      }),
+      this.fetchBuildingFromService(buildingId),
+    ]);
+
     if (rooms.length === 0) {
       throw new NotFoundException('Rooms not found');
     }
-    return rooms;
+
+    const roomsWithBuilding = rooms.map((room) => ({
+      ...room,
+      building,
+      buildingName: building?.name,
+      buildingAddress: building?.address,
+    }));
+
+    return roomsWithBuilding;
+  }
+
+  private async fetchBuildingFromService(
+    buildingId: string,
+  ): Promise<BuildingResponse> {
+    const baseUrl =
+      process.env.BUILDING_SERVICE_URL || 'http://building-service:3002';
+    const normalizedBaseUrl = baseUrl.endsWith('/')
+      ? baseUrl.slice(0, -1)
+      : baseUrl;
+    const url = `${normalizedBaseUrl}/buildings/${buildingId}`;
+
+    try {
+      const response = await axios.get(url, { timeout: 5000 });
+      const payload = response.data?.data ?? response.data;
+
+      if (!payload) {
+        throw new NotFoundException('Building not found');
+      }
+
+      return payload;
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response?.status === 404) {
+        throw new NotFoundException('Building not found');
+      }
+
+      throw new Error(
+        `Failed to fetch building info from building-service: ${axiosError.message}`,
+      );
+    }
   }
 }
