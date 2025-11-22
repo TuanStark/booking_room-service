@@ -7,7 +7,7 @@ import {
   IsArray,
   IsEnum,
 } from 'class-validator';
-import { RoomStatus } from '@prisma/client';
+import { RoomStatus } from './enum';
 
 export class CreateRoomDto {
   @IsString()

@@ -4,7 +4,7 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { UploadService } from 'src/utils/uploads.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllDto } from 'src/common/global/find-all.dto';
-import { RoomStatus } from '@prisma/client';
+import { RoomStatus } from './dto/enum';
 import { KafkaProducerService } from '../kafka/kafka.producer.service';
 import axios, { AxiosError } from 'axios';
 

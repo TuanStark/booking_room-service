@@ -3,7 +3,9 @@ import { Kafka, EachMessagePayload } from 'kafkajs';
 import { KafkaTopics } from './kafka-topics.enum';
 import { ConfigService } from '@nestjs/config';
 import { RoomsService } from '../rooms/rooms.service';
-import { RoomStatus, Room } from '@prisma/client';
+import { RoomStatus } from '../rooms/dto/enum';
+import { CreateRoomDto } from '../rooms/dto/create-room.dto';
+// import { Room } from '../rooms/dto/create-room.dto';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit {
@@ -114,7 +116,7 @@ export class KafkaConsumerService implements OnModuleInit {
           continue;
         }
 
-        const currentCountCapacity = (room as Room & { countCapacity?: number }).countCapacity ?? 0;
+        const currentCountCapacity = (room as CreateRoomDto & { countCapacity?: number }).countCapacity ?? 0;
         if (currentCountCapacity >= room.capacity) {
           await this.roomsService.update(roomId, {
             status: RoomStatus.BOOKED,
@@ -174,7 +176,7 @@ export class KafkaConsumerService implements OnModuleInit {
           continue;
         }
 
-        const currentCountCapacity = (room as Room & { countCapacity?: number }).countCapacity ?? 0;
+        const currentCountCapacity = (room as CreateRoomDto & { countCapacity?: number }).countCapacity ?? 0;
         if (currentCountCapacity <= 0) {
           throw new Error(
             `⚠️ Room ${roomId} countCapacity is already at minimum (countCapacity: ${currentCountCapacity})`,
