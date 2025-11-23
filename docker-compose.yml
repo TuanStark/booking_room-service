@@ -5,26 +5,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production  # Dùng stage production từ Dockerfile
-    container_name: room-service-prod
+    container_name: room-service
     ports:
       - "3003:3003"
-    environment:
-      PORT: 3003
-      NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
-      # Cloudinary
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-      UPLOAD_SERVICE_URL: ${UPLOAD_SERVICE_URL}
-      KAFKA_BROKER: ${KAFKA_BROKER:-booking_kafka:9092}
-      KAFKA_CLIENT_ID: ${KAFKA_CLIENT_ID}
-      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
-    # Không mount source code trong production
+    env_file:
+      - .env
     volumes:
       - /app/node_modules
-    user: node  # Chạy với user non-root (bảo mật)
     command: sh -c "npx prisma migrate deploy && node dist/main"
     restart: unless-stopped
     healthcheck:

@@ -116,7 +116,7 @@ export class KafkaConsumerService implements OnModuleInit {
           continue;
         }
 
-        const currentCountCapacity = (room as CreateRoomDto & { countCapacity?: number }).countCapacity ?? 0;
+        const currentCountCapacity = room.countCapacity ?? 0;
         if (currentCountCapacity >= room.capacity) {
           await this.roomsService.update(roomId, {
             status: RoomStatus.BOOKED,
@@ -176,7 +176,7 @@ export class KafkaConsumerService implements OnModuleInit {
           continue;
         }
 
-        const currentCountCapacity = (room as CreateRoomDto & { countCapacity?: number }).countCapacity ?? 0;
+        const currentCountCapacity = room.countCapacity ?? 0;
         if (currentCountCapacity <= 0) {
           throw new Error(
             `⚠️ Room ${roomId} countCapacity is already at minimum (countCapacity: ${currentCountCapacity})`,
