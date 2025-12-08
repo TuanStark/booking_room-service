@@ -21,7 +21,7 @@ export class RoomsService {
     private readonly uploadService: UploadService,
     private readonly prisma: PrismaService,
     private readonly kafkaService: KafkaProducerService,
-  ) {}
+  ) { }
 
   async create(createRoomDto: CreateRoomDto, files: Express.Multer.File[]) {
     console.log('1. Starting room creation...');
@@ -129,11 +129,11 @@ export class RoomsService {
     const searchUpCase = search.charAt(0).toUpperCase() + search.slice(1);
     const where = search
       ? {
-          OR: [
-            { name: { contains: searchUpCase } },
-            { address: { contains: searchUpCase } },
-          ],
-        }
+        OR: [
+          { name: { contains: searchUpCase } },
+          { address: { contains: searchUpCase } },
+        ],
+      }
       : {};
     const orderBy = {
       [sortBy]: sortOrder,
@@ -202,12 +202,12 @@ export class RoomsService {
     } = {
       status: RoomStatus.AVAILABLE,
     };
-    
+
     if (updateRoomDto.name !== undefined) updateData.name = updateRoomDto.name;
     if (updateRoomDto.price !== undefined) updateData.price = updateRoomDto.price;
     if (updateRoomDto.capacity !== undefined) updateData.capacity = updateRoomDto.capacity;
     if (updateRoomDto.countCapacity !== undefined) updateData.countCapacity = updateRoomDto.countCapacity;
-    
+
     const room = await this.prisma.room.update({
       where: { id },
       data: updateData,
@@ -406,5 +406,29 @@ export class RoomsService {
         `Failed to fetch building info from building-service: ${axiosError.message}`,
       );
     }
+  }
+
+  /**
+   * Get room statistics for dashboard
+   */
+  async getStats() {
+    const [total, available, booked, maintenance, disabled] = await Promise.all([
+      this.prisma.room.count(),
+      this.prisma.room.count({ where: { status: RoomStatus.AVAILABLE } }),
+      this.prisma.room.count({ where: { status: RoomStatus.BOOKED } }),
+      this.prisma.room.count({ where: { status: RoomStatus.MAINTENANCE } }),
+      this.prisma.room.count({ where: { status: RoomStatus.DISABLED } }),
+    ]);
+
+    const occupancyRate = total > 0 ? ((total - available) / total) * 100 : 0;
+
+    return {
+      totalRooms: total,
+      availableRooms: available,
+      bookedRooms: booked,
+      maintenanceRooms: maintenance,
+      disabledRooms: disabled,
+      occupancyRate: Math.round(occupancyRate * 100) / 100,
+    };
   }
 }

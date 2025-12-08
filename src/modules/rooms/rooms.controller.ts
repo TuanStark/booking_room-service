@@ -21,7 +21,7 @@ import { FindAllDto } from 'src/common/global/find-all.dto';
 
 @Controller('rooms')
 export class RoomsController {
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(private readonly roomsService: RoomsService) { }
 
   @Post()
   @UseInterceptors(FilesInterceptor('files'))
@@ -47,6 +47,24 @@ export class RoomsController {
     try {
       const room = await this.roomsService.findAll(query);
       return new ResponseData(room, HttpStatus.OK, HttpMessage.SUCCESS);
+    } catch (error) {
+      return new ResponseData(
+        null,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpMessage.SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get room statistics for dashboard
+   * GET /rooms/stats
+   */
+  @Get('stats')
+  async getStats() {
+    try {
+      const stats = await this.roomsService.getStats();
+      return new ResponseData(stats, HttpStatus.OK, HttpMessage.SUCCESS);
     } catch (error) {
       return new ResponseData(
         null,
