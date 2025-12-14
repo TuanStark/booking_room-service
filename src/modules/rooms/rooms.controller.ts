@@ -10,6 +10,8 @@ import {
   UseInterceptors,
   HttpStatus,
   Query,
+  HttpCode,
+  HttpException,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -99,16 +101,12 @@ export class RoomsController {
   // }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  @HttpCode(HttpStatus.NO_CONTENT) // 204
+  async remove(@Param('id') id: string): Promise<void> {
     try {
-      const room = await this.roomsService.remove(id);
-      return new ResponseData(room, HttpStatus.OK, HttpMessage.SUCCESS);
+      await this.roomsService.remove(id);
     } catch (error) {
-      return new ResponseData(
-        null,
-        HttpStatus.NOT_FOUND,
-        HttpMessage.NOT_FOUND,
-      );
+      throw new HttpException(HttpMessage.SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

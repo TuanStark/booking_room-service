@@ -292,7 +292,7 @@ export class RoomsService {
       timestamp: new Date().toISOString(),
     });
 
-    return deletedRoom;
+    return { message: 'Deleted successfully' };
   }
 
   // Methods for Kafka event handling
