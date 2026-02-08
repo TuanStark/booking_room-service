@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { RoomsModule } from './modules/rooms/rooms.module';
-import { KafkaModule } from './modules/kafka/kafka.module';
+import { RabbitMQModule } from './modules/rabbitmq/rabbitmq.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
@@ -12,10 +12,10 @@ import { PrismaService } from './prisma/prisma.service';
     }),
     PrismaModule,
     RoomsModule,
-    KafkaModule,
+    RabbitMQModule,
   ],
   controllers: [],
   providers: [PrismaService],
-  exports: [KafkaModule], // export nếu service khác cần
+  exports: [RabbitMQModule],
 })
-export class AppModule {}
+export class AppModule { }

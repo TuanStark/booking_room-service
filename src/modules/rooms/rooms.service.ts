@@ -5,7 +5,7 @@ import { UploadService } from 'src/utils/uploads.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllDto } from 'src/common/global/find-all.dto';
 import { RoomStatus } from './dto/enum';
-import { KafkaProducerService } from '../kafka/kafka.producer.service';
+import { RabbitMQProducerService } from '../rabbitmq/rabbitmq.producer.service';
 import axios, { AxiosError } from 'axios';
 
 export interface BuildingResponse {
@@ -20,7 +20,7 @@ export class RoomsService {
   constructor(
     private readonly uploadService: UploadService,
     private readonly prisma: PrismaService,
-    private readonly kafkaService: KafkaProducerService,
+    private readonly rabbitMQService: RabbitMQProducerService,
   ) { }
 
   async create(createRoomDto: CreateRoomDto, files: Express.Multer.File[]) {
@@ -98,8 +98,8 @@ export class RoomsService {
       include: { images: true, amenities: true },
     });
 
-    // 5. Publish event to Kafka
-    await this.kafkaService.emitRoomCreatedEvent({
+    // 5. Publish event to RabbitMQ
+    await this.rabbitMQService.publishMessage('room.created', {
       data: fullRoom,
       timestamp: new Date().toISOString(),
     });
@@ -179,7 +179,12 @@ export class RoomsService {
       throw new NotFoundException('Rooms not found');
     }
 
-    const building = await this.fetchBuildingFromService(room.buildingId);
+    let building: BuildingResponse | null = null;
+    try {
+      building = await this.fetchBuildingFromService(room.buildingId);
+    } catch (error) {
+      console.warn(`Failed to fetch building ${room.buildingId} for room ${id}:`, error.message);
+    }
 
     return {
       ...room,
@@ -266,8 +271,8 @@ export class RoomsService {
       include: { images: true, amenities: true },
     });
 
-    // 6. Publish event Kafka
-    await this.kafkaService.emitRoomUpdatedEvent({
+    // 6. Publish event RabbitMQ
+    await this.rabbitMQService.publishMessage('room.updated', {
       data: fullRoom,
       timestamp: new Date().toISOString(),
     });
@@ -287,7 +292,7 @@ export class RoomsService {
       include: { images: true, amenities: true },
     });
 
-    await this.kafkaService.emitRoomDeletedEvent({
+    await this.rabbitMQService.publishMessage('room.deleted', {
       data: deletedRoom,
       timestamp: new Date().toISOString(),
     });
