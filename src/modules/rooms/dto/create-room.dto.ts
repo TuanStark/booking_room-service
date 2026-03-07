@@ -32,6 +32,30 @@ export class CreateRoomDto {
   @IsOptional()
   imageUrls?: string[]; // danh sách ảnh upload (link url)
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  squareMeters?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  bedCount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  bathroomCount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  floor?: number;
+
   @IsArray()
   @IsOptional()
   @Transform(({ value }) => {

@@ -23,7 +23,7 @@ import { RoomsModule } from '../rooms/rooms.module';
                         queue:
                             configService.get<string>('RABBITMQ_QUEUE') || 'room.bookings',
                         queueOptions: { durable: true },
-                        noAck: false, // We want to manually ack
+                        noAck: true, // Producer-side must auto-ack (RabbitMQ reply queue requires it)
                         prefetchCount: 1,
                     },
                 }),

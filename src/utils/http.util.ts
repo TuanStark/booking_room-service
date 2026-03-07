@@ -57,9 +57,11 @@ export async function uploadImagesToService(
 
 export async function deleteImageToService(publicId: string): Promise<string> {
   try {
-    const res = await axios.delete(`${process.env.UPLOAD_SERVICE_URL}/upload`);
+    const res = await axios.delete(
+      `${process.env.UPLOAD_SERVICE_URL}/upload/${encodeURIComponent(publicId)}`,
+    );
     return res.data.message;
   } catch (error) {
-    throw new Error(`Failed to upload image: ${error.message}`);
+    throw new Error(`Failed to delete image (publicId=${publicId}): ${error.message}`);
   }
 }

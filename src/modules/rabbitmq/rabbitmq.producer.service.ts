@@ -13,13 +13,20 @@ export class RabbitMQProducerService implements OnModuleDestroy {
     async publishMessage(pattern: string, data: any): Promise<void> {
         try {
             await this.client.connect();
-            await lastValueFrom(this.client.emit(pattern, data));
-            this.logger.log(
-                `Message published to pattern: ${pattern}, data: ${JSON.stringify(data)}`,
-            );
+
+            // Fire and forget so we don't crash the main API execution
+            this.client.emit(pattern, data).subscribe({
+                next: () => {
+                    this.logger.log(`Message published to pattern: ${pattern}`);
+                },
+                error: (err) => {
+                    this.logger.error(`RabbitMQ emit error for ${pattern}:`, err);
+                }
+            });
+
         } catch (error: any) {
             this.logger.error(
-                `Failed to publish message to pattern ${pattern}: ${error.message}`,
+                `Failed to connect or publish message to pattern ${pattern}: ${error.message}`,
                 error.stack,
             );
         }

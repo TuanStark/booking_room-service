@@ -90,15 +90,21 @@ export class RoomsController {
     }
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateRoomDto: UpdateRoomDto) {
-  //   try {
-  //     const room = await this.roomsService.update(id, updateRoomDto);
-  //     return new ResponseData(room, HttpStatus.OK, HttpMessage.SUCCESS);
-  //   } catch (error) {
-  //     return new ResponseData(null, HttpStatus.NOT_FOUND, HttpMessage.NOT_FOUND);
-  //   }
-  // }
+  @Patch(':id')
+  @UseInterceptors(FilesInterceptor('files'))
+  async update(
+    @Param('id') id: string,
+    @Body() updateRoomDto: UpdateRoomDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    try {
+      const room = await this.roomsService.update(id, updateRoomDto, files);
+      return new ResponseData(room, HttpStatus.OK, HttpMessage.SUCCESS);
+    } catch (error) {
+      console.error('Update room error in controller:', error);
+      return new ResponseData(null, HttpStatus.INTERNAL_SERVER_ERROR, HttpMessage.SERVER_ERROR);
+    }
+  }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // 204
