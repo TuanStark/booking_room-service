@@ -1,6 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ConfigModule } from '@nestjs/config';
 import { RabbitMQProducerService } from './rabbitmq.producer.service';
 import { RabbitMQConsumerController } from './rabbitmq.consumer.controller';
 import { RoomsModule } from '../rooms/rooms.module';
@@ -9,27 +8,6 @@ import { RoomsModule } from '../rooms/rooms.module';
     imports: [
         ConfigModule,
         forwardRef(() => RoomsModule),
-        ClientsModule.registerAsync([
-            {
-                name: 'RABBITMQ_SERVICE',
-                imports: [ConfigModule],
-                useFactory: (configService: ConfigService) => ({
-                    transport: Transport.RMQ,
-                    options: {
-                        urls: [
-                            configService.get<string>('RABBITMQ_URL') ||
-                            'amqp://localhost:5672',
-                        ],
-                        queue:
-                            configService.get<string>('RABBITMQ_QUEUE') || 'room.bookings',
-                        queueOptions: { durable: true },
-                        noAck: true, // Producer-side must auto-ack (RabbitMQ reply queue requires it)
-                        prefetchCount: 1,
-                    },
-                }),
-                inject: [ConfigService],
-            },
-        ]),
     ],
     controllers: [RabbitMQConsumerController],
     providers: [RabbitMQProducerService],

@@ -141,7 +141,7 @@ export class RoomsService {
     const fullRoom = await this.findFullRoom(id);
 
     // 7. Publish event (fire-and-forget)
-    this.publishRoomEvent('room.updated', fullRoom);
+    // this.publishRoomEvent('room.updated', fullRoom);
 
     return fullRoom;
   }

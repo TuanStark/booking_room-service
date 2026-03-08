@@ -17,7 +17,7 @@ async function bootstrap() {
     transport: Transport.RMQ,
     options: {
       urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
-      queue: process.env.RABBITMQ_QUEUE || 'room.bookings',
+      queue: process.env.RABBITMQ_QUEUE || 'room_worker_queue',
       queueOptions: { durable: true },
       noAck: false,
       prefetchCount: 1,
