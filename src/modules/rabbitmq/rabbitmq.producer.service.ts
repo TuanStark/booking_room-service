@@ -57,8 +57,9 @@ export class RabbitMQProducerService implements OnModuleInit, OnModuleDestroy {
             };
 
             // Publish message via the Topic Exchange over the specified routing key (pattern)
-            await this.channelWrapper.publish(this.exchange, pattern, payload, {
+            await this.channelWrapper.publish(this.exchange, pattern, Buffer.from(JSON.stringify(payload)), {
                 persistent: true,
+                contentType: 'application/json',
             } as any);
 
             this.logger.log(`Message published to pattern: ${pattern}`);
