@@ -26,7 +26,6 @@ export class RabbitMQProducerService implements OnModuleInit, OnModuleDestroy {
         this.connection.on('disconnect', err => this.logger.error('Disconnected from RabbitMQ.', err));
 
         this.channelWrapper = this.connection.createChannel({
-            json: true,
             setup: async (channel: ConfirmChannel) => {
                 // 1. Assert Topic Exchange
                 await channel.assertExchange(this.exchange, 'topic', { durable: true });
@@ -50,13 +49,11 @@ export class RabbitMQProducerService implements OnModuleInit, OnModuleDestroy {
                 throw new Error('RabbitMQ channel is not available');
             }
 
-            // NestJS native RMQ consumers expect strict { pattern, data } format
             const payload = {
                 pattern: pattern,
                 data: data,
             };
 
-            // Publish message via the Topic Exchange over the specified routing key (pattern)
             await this.channelWrapper.publish(this.exchange, pattern, Buffer.from(JSON.stringify(payload)), {
                 persistent: true,
                 contentType: 'application/json',
