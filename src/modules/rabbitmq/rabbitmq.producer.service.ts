@@ -34,9 +34,12 @@ export class RabbitMQProducerService implements OnModuleInit, OnModuleDestroy {
                 await channel.assertQueue(this.queue, { durable: true });
 
                 // 3. Bind Queue to Exchange with routing keys this service needs to listen to
-                // Room Service listens to booking creations and cancellations
+                // Room Service listens to booking lifecycle events
                 await channel.bindQueue(this.queue, this.exchange, 'booking.created');
                 await channel.bindQueue(this.queue, this.exchange, 'booking.canceled');
+                await channel.bindQueue(this.queue, this.exchange, 'booking.expiring_soon');
+                await channel.bindQueue(this.queue, this.exchange, 'booking.completed');
+                await channel.bindQueue(this.queue, this.exchange, 'booking.renewed');
 
                 this.logger.log(`RabbitMQ Topology Setup: Exchange=${this.exchange}, Queue=${this.queue}`);
             },
