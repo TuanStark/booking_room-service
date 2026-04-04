@@ -169,15 +169,32 @@ export class RoomsService {
     const take = limitNumber;
     const skip = (pageNumber - 1) * take;
 
-    const searchUpCase = search.charAt(0).toUpperCase() + search.slice(1);
-    const where = search
-      ? {
+    // --- Build WHERE clause ---
+    const conditions: any[] = [];
+
+    // Search: case-insensitive across room name and description
+    if (search) {
+      conditions.push({
         OR: [
-          { name: { contains: searchUpCase } },
-          { address: { contains: searchUpCase } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    // Filter by status (e.g. 'AVAILABLE', 'BOOKED', etc.)
+    const status = query.status;
+    if (status) {
+      conditions.push({ status: status.toUpperCase() });
+    }
+
+    // Filter by buildingId
+    const buildingId = query.buildingId;
+    if (buildingId) {
+      conditions.push({ buildingId });
+    }
+
+    const where = conditions.length > 0 ? { AND: conditions } : {};
     const orderBy = { [sortBy]: sortOrder };
 
     const [rooms, total] = await Promise.all([
