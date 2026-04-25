@@ -47,8 +47,8 @@ export class RoomsService {
         buildingId: createRoomDto.buildingId,
         price: parseFloat(createRoomDto.price.toString()),
         capacity: parseInt(createRoomDto.capacity.toString()),
-        squareMeter: createRoomDto.squareMeters != null
-          ? Number(createRoomDto.squareMeters) : undefined,
+        squareMeter: createRoomDto.squareMeter != null
+          ? Number(createRoomDto.squareMeter) : undefined,
         description: createRoomDto.description,
         bedCount: createRoomDto.bedCount != null
           ? Number(createRoomDto.bedCount) : undefined,
@@ -274,6 +274,19 @@ export class RoomsService {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // BULK STATUS UPDATE — Atomic, single DB round-trip
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  async bulkUpdateStatus(dto: { ids: string[]; status: RoomStatus }): Promise<{ updated: number }> {
+    const result = await this.prisma.room.updateMany({
+      where: { id: { in: dto.ids } },
+      data: { status: dto.status },
+    });
+    this.logger.log(`Bulk status update: ${result.count} rooms → ${dto.status}`);
+    return { updated: result.count };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // HELPER — Room Status / Queries (for RabbitMQ consumers)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -385,7 +398,7 @@ export class RoomsService {
     if (dto.price !== undefined) updateData.price = Number(dto.price);
     if (dto.capacity !== undefined) updateData.capacity = Number(dto.capacity);
     if (dto.countCapacity !== undefined) updateData.countCapacity = Number(dto.countCapacity);
-    if (dto.squareMeters !== undefined) updateData.squareMeter = Number(dto.squareMeters);
+    if (dto.squareMeter !== undefined) updateData.squareMeter = Number(dto.squareMeter);
     if (dto.bedCount !== undefined) updateData.bedCount = Number(dto.bedCount);
     if (dto.bathroomCount !== undefined) updateData.bathroomCount = Number(dto.bathroomCount);
     if (dto.floor !== undefined) updateData.floor = Number(dto.floor);

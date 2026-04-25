@@ -16,6 +16,7 @@ import {
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { BulkUpdateStatusDto } from './dto/bulk-update-status.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { HttpMessage } from 'src/common/global/globalEnum';
 import { ResponseData } from 'src/common/global/globalClass';
@@ -87,6 +88,17 @@ export class RoomsController {
         HttpStatus.NOT_FOUND,
         HttpMessage.NOT_FOUND,
       );
+    }
+  }
+
+  @Patch('bulk-status')
+  async bulkUpdateStatus(@Body() dto: BulkUpdateStatusDto) {
+    try {
+      const result = await this.roomsService.bulkUpdateStatus(dto);
+      return new ResponseData(result, HttpStatus.OK, HttpMessage.SUCCESS);
+    } catch (error) {
+      console.error('Bulk update status error:', error);
+      return new ResponseData(null, HttpStatus.INTERNAL_SERVER_ERROR, HttpMessage.SERVER_ERROR);
     }
   }
 

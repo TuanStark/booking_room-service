@@ -39,7 +39,7 @@ export class CreateRoomDto {
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
-  squareMeters?: number;
+  squareMeter?: number;
 
   @IsNumber()
   @IsOptional()
